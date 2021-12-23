@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PLC Message Decoder</title>
+</head>
+<body>
+<div>
+    <label for="bitOffset">Bit Offset</label>
+    <br>
+    <input type="number" id="bitOffset" style="width: 50%"/>
+    <br><br>
+    <label for="byteArray">Byte Array</label>
+    <br>
+    <input type="text" id="byteArray" style="width: 50%"/>
+    <br><br>
+    <button type="button" onclick="getActiveStats()">
+        Show Active Stats
+    </button>
+    <div id="result">
+
+    </div>
+</div>
+</body>
+<script type="text/javascript">
+    function getActiveStats() {
+        const bitOffset = document.getElementById("bitOffset").value;
+        const byteArray = document.getElementById("byteArray").value;
+        console.log(`Decoding ${byteArray} with offset ${bitOffset}`);
+        let result = decode(byteArray, parseInt(bitOffset));
+        let resultDiv = document.getElementById("result");
+        resultDiv.innerHTML = result.map(r => `<p>${r}</p>`).join("");
+    }
+
+    function decode(byteArray, offset) {
+        let bytes = parseHexString(byteArray);
+        console.log("Bytes length: " + bytes.length);
+        let statusNumberCount = bytes.length * 8;
+        let result = [];
+        for (let statusNum = offset; statusNum < (offset + statusNumberCount); statusNum++) {
+            let statusNumber = statusNum - offset;
+            let active = (bytes[statusNumber / 8] & (1 << (statusNumber % 8))) > 0;
+            if (active) {
+                result.push(statusNum);
+            }
+        }
+        return result;
+    }
+
+
+    function parseHexString(byteArray) {
+        const len = byteArray.length;
+        if (len % 2 !== 0) {
+            alert("Hex Binary needs to be even-length!");
+        } else {
+            const out = [];
+            for (let i = 0; i < len; i += 2) {
+                let h = hexToBin(byteArray.charAt(i));
+                let l = hexToBin(byteArray.charAt(i + 1));
+                if (h === -1 || l === -1) {
+                    alert("Contains illegal character for Hex Binary!");
+                }
+                out[i / 2] = h * 16 + l;
+            }
+            return out;
+        }
+    }
+
+    function hexToBin(ch) {
+        ch = ch.charCodeAt(0);
+        let zero = '0'.charCodeAt(0);
+        let nine = '9'.charCodeAt(0);
+        let capA = 'A'.charCodeAt(0);
+        let capF = 'F'.charCodeAt(0);
+        let smallA = 'a'.charCodeAt(0);
+        let smallF = 'f'.charCodeAt(0);
+        if (zero <= ch && ch <= nine) {
+            return ch - zero;
+        }
+        if (capA <= ch && ch <= capF) {
+            return ch - capA + 10;
+        }
+        if (smallA <= ch && ch <= smallF) {
+            return ch - smallA + 10;
+        }
+        return -1;
+    }
+
+</script>
+</html>
